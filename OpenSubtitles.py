@@ -3,7 +3,12 @@ import urllib2
 import zipfile
 import os, glob
 
-lang = 'eng'
+lang = ''
+
+def getIDMOVIEfromIMDB(imdbid) :
+	url = 'https://www.opensubtitles.org/es/search/sublanguageid-spa/imdbid-'+imdbid
+	response = urllib2.urlopen(url)
+	return response.url.split('idmovie-')[1]
 
 def searchSeries(name):
 	parsedName = urllib.quote_plus(name)
@@ -115,21 +120,32 @@ def main():
 	print ""
 	global lang
 	lang = raw_input('LANG [eng]:> ')
+	if lang == '':
+		lang = 'eng'
 	print "\n"
 
 	name = raw_input(':> ')
 
-	SERIES_RESULTS = searchSeries(name)
-	print "\n\n"
-	print "Result search of "+name+":"
-	SERIES_RESULTS_IDXs = {}
-	for idx, result in enumerate(SERIES_RESULTS):
-		SERIES_RESULTS_IDXs[idx] = result
-		print '['+str(idx)+'] '+result
-	print ""
-	SERIES = raw_input('>: ')
+	SEASONS_RESULTS = ''
 
-	SEASONS_RESULTS = searchSeasons(SERIES_RESULTS[SERIES_RESULTS_IDXs[int(SERIES)]])
+	SERIESID = ''
+	if list(name)[0] == 't' and list(name)[1] == 't':
+		imdbid = name.split('tt')[1]
+		SERIESID = getIDMOVIEfromIMDB(imdbid)
+	else:
+		SERIES_RESULTS = searchSeries(name)
+		print "\n\n"
+		print "Result search of "+name+":"
+		SERIES_RESULTS_IDXs = {}
+		for idx, result in enumerate(SERIES_RESULTS):
+			SERIES_RESULTS_IDXs[idx] = result
+			print '['+str(idx)+'] '+result
+		print ""
+		SERIES = raw_input('>: ')
+		SERIESID = SERIES_RESULTS[SERIES_RESULTS_IDXs[int(SERIES)]]
+
+	SEASONS_RESULTS = searchSeasons(SERIESID)
+
 	print "\n\n"
 	print "Choose a season:"
 	for result in SEASONS_RESULTS:	# This isn't sorted
@@ -137,7 +153,7 @@ def main():
 	print ""
 	SEASON = raw_input('>: ')
 
-	EPISODES_RESULTS = searchEpisodes(SERIES_RESULTS[SERIES_RESULTS_IDXs[int(SERIES)]], SEASON)
+	EPISODES_RESULTS = searchEpisodes(SERIESID, SEASON)
 	print "\n\n"
 	print "Choose an episode:"
 	for result in EPISODES_RESULTS:
